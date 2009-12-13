@@ -20,6 +20,9 @@ Enable-A o---|D5      B0|---o Block 0
      GND o---|GND_____D6|---o Enable-B
 */
 
+#define BLOCK_A		(0)
+#define BLOCK_B		(1)
+
 #define Data_IN		(_BV(PD0))
 #define Data_OUT	(_BV(PD1))
 #define Check		(_BV(PD4))
@@ -34,6 +37,8 @@ Enable-A o---|D5      B0|---o Block 0
 #define SIG_SAVE	(1<<4)
 
 #define Buffer	GPIOR1
+#define DELAY_A		(1<<0)
+#define DELAY_B		(1<<1)
 #define BUFF_OUT	(1<<6)
 #define BUFF_IN		(1<<7)
 
@@ -42,10 +47,12 @@ typedef union {
         uint16_t shift16;
 } shift_t;
 
-static shift_t shifter, status;
+register shift_t shifter asm("r2");
+static shift_t status;
 
-register uint8_t time_ms asm("r2");
-register uint8_t counter_read asm("r3"), counter_ms asm("r4");
+register uint8_t time_ms asm("r4");
+register uint8_t counter_read asm("r5"), counter_ms asm("r6");
+static uint8_t timers[2][8];
 
 ISR(INT0_vect, ISR_NAKED) {
 	Signals |= SIG_CLOCK;
@@ -60,7 +67,19 @@ ISR(INT0_vect, ISR_NAKED) {
 }
 
 ISR(INT1_vect, ISR_NAKED) {
+#if 0 // done in IRQ
 	Signals |= SIG_LATCH;
+#endif
+	asm volatile(
+		"push r0"		"\n\t"
+		"in r0, __SREG__"	"\n\t"
+	);
+	shifter.shift8[BLOCK_A] = status.shift8[BLOCK_A];
+	shifter.shift8[BLOCK_B] = status.shift8[BLOCK_B];
+	asm volatile(
+		"out __SREG__, r0"	"\n\t"
+		"pop r0"		"\n\t"
+	);
 	reti();
 }
 
@@ -68,8 +87,13 @@ ISR(TIMER0_COMPA_vect, ISR_NAKED) {
 	asm volatile(
 		"push r0"		"\n\t"
 		"in r0, __SREG__"	"\n\t"
+		"sei"			"\n\t"
 	);
 	Signals |= SIG_TIMER;
+
+	if (0 == (PIND & Data_IN)) Buffer &= ~BUFF_IN;
+	else Buffer |= BUFF_IN;
+
 	counter_read++;
 	counter_ms++;
 	asm volatile(
@@ -80,10 +104,18 @@ ISR(TIMER0_COMPA_vect, ISR_NAKED) {
 }
 
 void init (void) {
-	time_ms = 0;
+	uint8_t i;
+
+	Signals = 0;
+	time_ms = 1;
 	counter_read = 0;
 	counter_ms = 0;
 
+	for (i=0; i<8; i++)
+	{
+		timers[BLOCK_A][i] = 0;
+		timers[BLOCK_B][i] = 0;
+	}
 	set_sleep_mode(SLEEP_MODE_IDLE);
 
 	CLKPR	= 0x80; 	/* disable clock divider */
@@ -116,15 +148,16 @@ void do_shifting() {
 	shifter.shift16 = shifter.shift16 >> 1;
 
 	if (BUFF_IN & Buffer)
-		shifter.shift8[1] |= 0x80;
+		shifter.shift8[BLOCK_B] |= 0x80;
 }
 
 void do_latch() {
-	shifter.shift8[0] = status.shift8[0];
-	shifter.shift8[1] = status.shift8[1];
+	shifter.shift8[BLOCK_A] = status.shift8[BLOCK_A];
+	shifter.shift8[BLOCK_B] = status.shift8[BLOCK_B];
 }
 
 void do_timer() {
+	uint8_t i;
 	if (10 <= counter_read) { /* 10us * 10 = 100us */
 		counter_read = 0;
 		Signals |= SIG_CHECK;
@@ -133,36 +166,45 @@ void do_timer() {
 	if (100 <= counter_ms) { /* 10us * 100 = 1000us */
 		counter_ms -= 100;
 		time_ms++;
+		for (i=0; i<8; i++)
+		{
+			if (DELAY_A & Buffer) timers[BLOCK_A][i]++;
+			if (DELAY_B & Buffer) timers[BLOCK_B][i]++;
+		}
+		Buffer |= DELAY_A;
+		Buffer |= DELAY_B;
 	}
 }
 
 void do_check_blocks() {
-	static uint8_t AorB = 0;
-	static uint8_t timers[2][8];
-	uint8_t input, ltime, i;
+	static uint8_t AorB = BLOCK_A;
+	uint8_t inputb, inputd, ltime, i, mask;
 
 	ltime = time_ms - 1;
-	if (PIND & Check) { /* non zero if power supply is missing */
-		for (i=0; i<8; i++)
-			timers[AorB][i] = ltime;
-		// delay + write data to eeprom
-		return;
-	}
+	inputb = PINB;
+	inputd = PIND;
 
-	input = PINB;
-	for (i=0; i<8; i++) {
-	
-		if (0 == (input & (1<<i))) { /* low -> block occupied */
+	for (mask=1, i=0; i<8; i++, mask=mask<<1)
+	{
+		if (0 == (inputb & mask)) /* low -> block occupied */
+		{
 			timers[AorB][i] = ltime;
-			status.shift8[AorB] |= (1<<i);
+			status.shift8[AorB] |= mask;
 		}
-
-		if (time_ms == timers[AorB][i])
-			status.shift8[AorB] &= ~(1<<i);
 	}
 
-	AorB ^= 1;
-	if (0 == AorB) {
+	if (inputd & Check) /* power supply available */
+	{
+		if (BLOCK_A == AorB) Buffer &= ~DELAY_A;
+		else Buffer &= ~DELAY_B;
+
+		for (mask=1, i=0; i<8; i++, mask=mask<<1)
+			if (time_ms == timers[AorB][i]) /* free vacant blocks */
+				status.shift8[AorB] &= ~mask;
+	}
+
+	AorB ^= 1; /* switch blocks */
+	if (BLOCK_A == AorB) {
 		PIND |= Enable_B;	/* Disable_B */
 		PIND &= ~Enable_A;	/* Enable_A */
 	} else {
@@ -179,19 +221,16 @@ int main(void) {
 	if (0 == Signals)
         	sleep_mode();
 
-	if (0 == (PIND & Data_IN)) Buffer &= ~BUFF_IN;
-	else Buffer |= BUFF_IN;
-
 	if (SIG_CLOCK & Signals) {
 		Signals &= ~SIG_CLOCK;
 		do_shifting();
 	}
-
+#if 0 // moved to IRQ
 	if (SIG_LATCH & Signals) {
 		Signals &= ~SIG_LATCH;
 		do_latch();
 	}
-
+#endif
 	if (1 & shifter.shift8[0]) Buffer |= BUFF_OUT;
 	else Buffer &= ~BUFF_OUT;
 
