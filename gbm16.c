@@ -76,9 +76,6 @@ ISR(INT1_vect, ISR_NAKED) {
 	);
 	shifter.shift8[BLOCK_A] = status.shift8[BLOCK_A];
 	shifter.shift8[BLOCK_B] = status.shift8[BLOCK_B];
-
-	PORTA |= _BV(1);
-
 	asm volatile(
 		"out __SREG__, r0"	"\n\t"
 		"pop r0"		"\n\t"
@@ -93,8 +90,6 @@ ISR(TIMER0_COMPA_vect, ISR_NAKED) {
 		"sei"			"\n\t"
 	);
 	Signals |= SIG_TIMER;
-
-	PORTA |= _BV(0);
 
 	if (0 == (PIND & Data_IN)) Buffer &= ~BUFF_IN;
 	else Buffer |= BUFF_IN;
@@ -128,8 +123,8 @@ void init (void) {
 	CLKPR	= 0x00;
 
 	/* configure port A */
-	DDRA	= 0b00000011;
-	PORTA	= 0b00000000;
+// 	DDRA	= 0b00000011;
+// 	PORTA	= 0b00000000;
 
 	/* configure port B */
 	DDRB	= 0b00000000;	/* all pins are input */
@@ -199,7 +194,7 @@ void do_check_blocks() {
 		}
 	}
 
-	if (inputd & Check) /* power supply available */
+	if (0 == (inputd & Check)) /* low if power supply available */
 	{
 		if (BLOCK_A == AorB) Buffer &= ~DELAY_A;
 		else Buffer &= ~DELAY_B;
@@ -211,13 +206,12 @@ void do_check_blocks() {
 
 	AorB ^= 1; /* switch blocks */
 	if (BLOCK_A == AorB) {
-		PIND |= Enable_B;	/* Disable_B */
-		PIND &= ~Enable_A;	/* Enable_A */
+		PORTD |= Enable_B;	/* Disable_B */
+		PORTD &= ~Enable_A;	/* Enable_A */
 	} else {
-		PIND |= Enable_A;	/* Disable_A */
-		PIND &= ~Enable_B;	/* Enable_B */
+		PORTD |= Enable_A;	/* Disable_A */
+		PORTD &= ~Enable_B;	/* Enable_B */
 	}
-	PORTA &= ~_BV(1);
 }
 
 int main(void) {
@@ -238,12 +232,12 @@ int main(void) {
 
 	if (SIG_TIMER & Signals) {
 		Signals &= ~SIG_TIMER;
-// 		do_timer();
+		do_timer();
 	}
 
 	if (SIG_CHECK & Signals) {
 		Signals &= ~SIG_CHECK;
-// 		do_check_blocks();
+		do_check_blocks();
 	}
     }
 
