@@ -16,8 +16,8 @@ Data_OUT o---|D1  AT  B6|---o Block 6
    Clock o-D2|Int0    B3|---o Block 3
       PS o-D3|Int1    B2|---o Block 2
    Check o---|D4      B1|---o Block 1
-Enable-A o---|D5      B0|---o Block 0
-     GND o---|GND_____D6|---o Enable-B
+Enable-B o---|D5      B0|---o Block 0
+     GND o---|GND_____D6|---o Enable-A
 */
 
 #define BLOCK_A		(0)
@@ -26,8 +26,8 @@ Enable-A o---|D5      B0|---o Block 0
 #define Data_IN		(_BV(PD0))
 #define Data_OUT	(_BV(PD1))
 #define Check		(_BV(PD4))
-#define Enable_A	(_BV(PD5))
-#define Enable_B	(_BV(PD6))
+#define Enable_A	(_BV(PD6))
+#define Enable_B	(_BV(PD5))
 
 #define Signals	GPIOR0
 #define SIG_CLOCK	(1<<0)
