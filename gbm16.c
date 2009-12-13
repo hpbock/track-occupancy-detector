@@ -76,6 +76,9 @@ ISR(INT1_vect, ISR_NAKED) {
 	);
 	shifter.shift8[BLOCK_A] = status.shift8[BLOCK_A];
 	shifter.shift8[BLOCK_B] = status.shift8[BLOCK_B];
+
+	PORTA |= _BV(1);
+
 	asm volatile(
 		"out __SREG__, r0"	"\n\t"
 		"pop r0"		"\n\t"
@@ -90,6 +93,8 @@ ISR(TIMER0_COMPA_vect, ISR_NAKED) {
 		"sei"			"\n\t"
 	);
 	Signals |= SIG_TIMER;
+
+	PORTA |= _BV(0);
 
 	if (0 == (PIND & Data_IN)) Buffer &= ~BUFF_IN;
 	else Buffer |= BUFF_IN;
@@ -110,6 +115,7 @@ void init (void) {
 	time_ms = 1;
 	counter_read = 0;
 	counter_ms = 0;
+	status.shift16 = 0x8421;
 
 	for (i=0; i<8; i++)
 	{
@@ -120,6 +126,10 @@ void init (void) {
 
 	CLKPR	= 0x80; 	/* disable clock divider */
 	CLKPR	= 0x00;
+
+	/* configure port A */
+	DDRA	= 0b00000011;
+	PORTA	= 0b00000000;
 
 	/* configure port B */
 	DDRB	= 0b00000000;	/* all pins are input */
@@ -151,11 +161,6 @@ void do_shifting() {
 		shifter.shift8[BLOCK_B] |= 0x80;
 }
 
-void do_latch() {
-	shifter.shift8[BLOCK_A] = status.shift8[BLOCK_A];
-	shifter.shift8[BLOCK_B] = status.shift8[BLOCK_B];
-}
-
 void do_timer() {
 	uint8_t i;
 	if (10 <= counter_read) { /* 10us * 10 = 100us */
@@ -164,6 +169,7 @@ void do_timer() {
 	}
 
 	if (100 <= counter_ms) { /* 10us * 100 = 1000us */
+		PORTA &= ~_BV(0);
 		counter_ms -= 100;
 		time_ms++;
 		for (i=0; i<8; i++)
@@ -211,6 +217,7 @@ void do_check_blocks() {
 		PIND |= Enable_A;	/* Disable_A */
 		PIND &= ~Enable_B;	/* Enable_B */
 	}
+	PORTA &= ~_BV(1);
 }
 
 int main(void) {
@@ -225,23 +232,18 @@ int main(void) {
 		Signals &= ~SIG_CLOCK;
 		do_shifting();
 	}
-#if 0 // moved to IRQ
-	if (SIG_LATCH & Signals) {
-		Signals &= ~SIG_LATCH;
-		do_latch();
-	}
-#endif
+
 	if (1 & shifter.shift8[0]) Buffer |= BUFF_OUT;
 	else Buffer &= ~BUFF_OUT;
 
 	if (SIG_TIMER & Signals) {
 		Signals &= ~SIG_TIMER;
-		do_timer();
+// 		do_timer();
 	}
 
 	if (SIG_CHECK & Signals) {
 		Signals &= ~SIG_CHECK;
-		do_check_blocks();
+// 		do_check_blocks();
 	}
     }
 
