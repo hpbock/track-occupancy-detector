@@ -20,6 +20,8 @@ Enable-B o---|D5      B0|---o Block 0
      GND o---|GND_____D6|---o Enable-A
 */
 
+#define CYCLETIME	(8)	/* cycletime in us */
+
 #define BLOCK_A		(0)
 #define BLOCK_B		(1)
 
@@ -132,7 +134,7 @@ void init (void)
 	/* initialize timer 0 */
 	TCCR0A	= 0b00000010;	/* CTC mode */
 	TCCR0B	= 0b00000010;	/* div8 -> timer runs with 1MHz */
-	OCR0A	= 10;		/* interrupt every 10us */
+	OCR0A	= CYCLETIME;
 	TIMSK	= 0b00000001;	/* enable OCF0A interrupt */
 
 	MCUCR	= 0b00001111;	/* configure raising edge interrupt on INT0 and INT1 */
@@ -150,19 +152,21 @@ void do_shifting()
 		shifter.shift8[BLOCK_B] |= 0x80;
 }
 
+#define MS_CYCLES	(1024/CYCLETIME)	 /* 1024us ~ 1ms */
+
 void do_timer()
 {
 	uint8_t i;
-	if (10 <= counter_read) /* 10us * 10 = 100us */
+	if ((128/CYCLETIME) <= counter_read) /* 128us */
 	{
 		counter_read = 0;
 		Signals |= SIG_CHECK;
 	}
 
-	if (100 <= counter_ms) /* 10us * 100 = 1000us = 1ms */
+	if (MS_CYCLES <= counter_ms)
 	{
 		PORTA &= ~_BV(0);
-		counter_ms -= 100;
+		counter_ms -= MS_CYCLES;
 		time_ms++;
 		for (i=0; i<8; i++)
 		{
