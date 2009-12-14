@@ -41,7 +41,8 @@ Enable-B o---|D5      B0|---o Block 0
 #define BUFF_OUT	(1<<6)
 #define BUFF_IN		(1<<7)
 
-typedef union {
+typedef union
+{
         uint8_t shift8[2];
         uint16_t shift16;
 } shift_t;
@@ -53,25 +54,28 @@ register uint8_t time_ms asm("r4");
 register uint8_t counter_read asm("r5"), counter_ms asm("r6");
 static uint8_t timers[2][8];
 
-ISR(INT0_vect, ISR_NAKED) {
+ISR(INT0_vect, ISR_NAKED)
+{
 	Signals |= SIG_CLOCK;
-	if (BUFF_OUT & Buffer) {
+	if (BUFF_OUT & Buffer)
+	{
 		PORTD |= Data_OUT;
 		reti();
 	} else {
 		PORTD &= ~Data_OUT;
 		reti();
 	}
-	reti();
 }
 
-ISR(INT1_vect, ISR_NAKED) {
+ISR(INT1_vect, ISR_NAKED)
+{
 	shifter.shift8[BLOCK_A] = status.shift8[BLOCK_A];
 	shifter.shift8[BLOCK_B] = status.shift8[BLOCK_B];
 	reti();
 }
 
-ISR(TIMER0_COMPA_vect, ISR_NAKED) {
+ISR(TIMER0_COMPA_vect, ISR_NAKED)
+{
 	asm volatile(
 		"push r0"		"\n\t"
 		"in r0, __SREG__"	"\n\t"
@@ -87,18 +91,19 @@ ISR(TIMER0_COMPA_vect, ISR_NAKED) {
 	asm volatile(
 		"out __SREG__, r0"	"\n\t"
 		"pop r0"		"\n\t"
+		"reti"			"\n\t"
 	);
-	reti();
 }
 
-void init (void) {
+void init (void)
+{
 	uint8_t i;
 
-	Signals = 0;
-	time_ms = 1;
-	counter_read = 0;
-	counter_ms = 0;
-	status.shift16 = 0x8421;
+	Signals		= 0;
+	time_ms 	= 1;
+	counter_read	= 0;
+	counter_ms	= 0;
+	status.shift16	= 0x8421;
 
 	for (i=0; i<8; i++)
 	{
@@ -137,21 +142,25 @@ void init (void) {
 	sei();
 }
 
-void do_shifting() {
+void do_shifting() 
+{
 	shifter.shift16 = shifter.shift16 >> 1;
 
 	if (BUFF_IN & Buffer)
 		shifter.shift8[BLOCK_B] |= 0x80;
 }
 
-void do_timer() {
+void do_timer()
+{
 	uint8_t i;
-	if (10 <= counter_read) { /* 10us * 10 = 100us */
+	if (10 <= counter_read) /* 10us * 10 = 100us */
+	{
 		counter_read = 0;
 		Signals |= SIG_CHECK;
 	}
 
-	if (100 <= counter_ms) { /* 10us * 100 = 1000us = 1ms */
+	if (100 <= counter_ms) /* 10us * 100 = 1000us = 1ms */
+	{
 		PORTA &= ~_BV(0);
 		counter_ms -= 100;
 		time_ms++;
@@ -165,7 +174,8 @@ void do_timer() {
 	}
 }
 
-void do_check_blocks() {
+void do_check_blocks()
+{
 	static uint8_t AorB = BLOCK_A;
 	uint8_t inputb, inputd, ltime, i, mask;
 
@@ -193,7 +203,8 @@ void do_check_blocks() {
 	}
 
 	AorB ^= 1; /* switch blocks */
-	if (BLOCK_A == AorB) {
+	if (BLOCK_A == AorB)
+	{
 		PORTD |= Enable_B;	/* Disable_B */
 		PORTD &= ~Enable_A;	/* Enable_A */
 	} else {
@@ -202,15 +213,17 @@ void do_check_blocks() {
 	}
 }
 
-int main(void) {
-
+int main(void)
+{
     init ();
 
-    while (1) { /* loop forever, the interrupts are doing the rest */
+    while (1) /* loop forever, the interrupts are doing the rest */
+    {
 	if (0 == Signals)
         	sleep_mode();
 
-	if (SIG_CLOCK & Signals) {
+	if (SIG_CLOCK & Signals)
+	{
 		Signals &= ~SIG_CLOCK;
 		do_shifting();
 	}
@@ -218,12 +231,14 @@ int main(void) {
 	if (1 & shifter.shift8[0]) Buffer |= BUFF_OUT;
 	else Buffer &= ~BUFF_OUT;
 
-	if (SIG_TIMER & Signals) {
+	if (SIG_TIMER & Signals)
+	{
 		Signals &= ~SIG_TIMER;
 		do_timer();
 	}
 
-	if (SIG_CHECK & Signals) {
+	if (SIG_CHECK & Signals)
+	{
 		Signals &= ~SIG_CHECK;
 		do_check_blocks();
 	}
