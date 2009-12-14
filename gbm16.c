@@ -2,6 +2,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
+#include <avr/pgmspace.h>
 
 /**********************************************
               H a r d w a r e
@@ -19,6 +20,8 @@ Data_OUT o---|D1  AT  B6|---o Block 6
 Enable-B o---|D5      B0|---o Block 0
      GND o---|GND_____D6|---o Enable-A
 */
+
+char string_1[] PROGMEM = "(c) 2009 Hans-Peter Bock <hpbock@avaapgh.de>";
 
 #define CYCLETIME	(8)	/* cycletime in us */
 
@@ -105,7 +108,8 @@ void init (void)
 	time_ms 	= 1;
 	counter_read	= 0;
 	counter_ms	= 0;
-	status.shift16	= 0x8421;
+	status.shift8[0]= 'H';
+	status.shift8[1]= 'P';
 
 	for (i=0; i<8; i++)
 	{
