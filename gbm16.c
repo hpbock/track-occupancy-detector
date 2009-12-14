@@ -31,7 +31,6 @@ Enable-B o---|D5      B0|---o Block 0
 
 #define Signals	GPIOR0
 #define SIG_CLOCK	(1<<0)
-#define SIG_LATCH	(1<<1)
 #define SIG_TIMER	(1<<2)
 #define SIG_CHECK	(1<<3)
 #define SIG_SAVE	(1<<4)
@@ -67,19 +66,8 @@ ISR(INT0_vect, ISR_NAKED) {
 }
 
 ISR(INT1_vect, ISR_NAKED) {
-#if 0 // done in IRQ
-	Signals |= SIG_LATCH;
-#endif
-	asm volatile(
-		"push r0"		"\n\t"
-		"in r0, __SREG__"	"\n\t"
-	);
 	shifter.shift8[BLOCK_A] = status.shift8[BLOCK_A];
 	shifter.shift8[BLOCK_B] = status.shift8[BLOCK_B];
-	asm volatile(
-		"out __SREG__, r0"	"\n\t"
-		"pop r0"		"\n\t"
-	);
 	reti();
 }
 
@@ -163,7 +151,7 @@ void do_timer() {
 		Signals |= SIG_CHECK;
 	}
 
-	if (100 <= counter_ms) { /* 10us * 100 = 1000us */
+	if (100 <= counter_ms) { /* 10us * 100 = 1000us = 1ms */
 		PORTA &= ~_BV(0);
 		counter_ms -= 100;
 		time_ms++;
