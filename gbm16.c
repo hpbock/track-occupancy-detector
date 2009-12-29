@@ -30,6 +30,8 @@ char string_1[] PROGMEM = "(c) 2009 Hans-Peter Bock <hpbock@avaapgh.de>";
 
 #define Data_IN		(_BV(PD0))
 #define Data_OUT	(_BV(PD1))
+#define EINT0		(_BV(PD2))
+#define EINT1		(_BV(PD3))
 #define Check		(_BV(PD4))
 #define Enable_A	(_BV(PD6))
 #define Enable_B	(_BV(PD5))
