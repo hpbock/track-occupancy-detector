@@ -23,7 +23,7 @@ Enable-B o---|D5      B0|---o Block 0
 
 char string_1[] PROGMEM = "(c) 2009 Hans-Peter Bock <hpbock@avaapgh.de>";
 
-#define CYCLETIME	(8)	/* cycletime in us */
+#define CYCLETIME	(64)	/* cycletime in us */
 
 #define BLOCK_A		(0)
 #define BLOCK_B		(1)
@@ -37,10 +37,9 @@ char string_1[] PROGMEM = "(c) 2009 Hans-Peter Bock <hpbock@avaapgh.de>";
 #define Enable_B	(_BV(PD5))
 
 #define Signals	GPIOR0
-#define SIG_CLOCK	(1<<0)
 #define SIG_TIMER	(1<<2)
 #define SIG_CHECK	(1<<3)
-#define SIG_SAVE	(1<<4)
+// #define SIG_SAVE	(1<<4)
 
 #define Buffer	GPIOR1
 #define DELAY_A		(1<<0)
@@ -60,6 +59,7 @@ register uint8_t time_ms asm("r4");
 register uint8_t counter_read asm("r5"), counter_ms asm("r6");
 static uint8_t timers[2][8];
 
+void do_shifting();
 ISR(INT0_vect)
 {
 	if (CLOCK & PIND) // low-›high: latch input
@@ -70,7 +70,7 @@ ISR(INT0_vect)
 			Buffer &= ~BUFF_IN;
 
 		if (0 == (LOAD & PIND)) // only shift if LOAD is low
-			Signals |= SIG_CLOCK;
+			do_shifting();
 		
 	} else { // high-›low: latch output
 		if (1 & shifter.shift8[0])
@@ -226,12 +226,6 @@ int main(void)
     {
 	if (0 == Signals)
         	sleep_mode();
-
-	if (SIG_CLOCK & Signals)
-	{
-		Signals &= ~SIG_CLOCK;
-		do_shifting();
-	}
 
 	if (SIG_TIMER & Signals)
 	{
