@@ -81,13 +81,10 @@ ISR(INT1_vect, ISR_NAKED)
 	reti();
 }
 
-ISR(TIMER0_COMPA_vect, ISR_NAKED)
+ISR(TIMER0_COMPA_vect)
 {
-	asm volatile(
-		"push r0"		"\n\t"
-		"in r0, __SREG__"	"\n\t"
-		"sei"			"\n\t"
-	);
+	sei();
+	
 	Signals |= SIG_TIMER;
 
 	if (0 == (PIND & Data_IN)) Buffer &= ~BUFF_IN;
@@ -95,11 +92,6 @@ ISR(TIMER0_COMPA_vect, ISR_NAKED)
 
 	counter_read++;
 	counter_ms++;
-	asm volatile(
-		"out __SREG__, r0"	"\n\t"
-		"pop r0"		"\n\t"
-		"reti"			"\n\t"
-	);
 }
 
 void init (void)
