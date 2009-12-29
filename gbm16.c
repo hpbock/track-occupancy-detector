@@ -37,9 +37,9 @@ char string_1[] PROGMEM = "(c) 2009 Hans-Peter Bock <hpbock@avaapgh.de>";
 #define Enable_B	(_BV(PD5))
 
 #define Signals	GPIOR0
-#define SIG_TIMER	(1<<2)
-#define SIG_CHECK	(1<<3)
-// #define SIG_SAVE	(1<<4)
+#define SIG_TIMER	(1<<0)
+#define SIG_CHECK	(1<<1)
+// #define SIG_SAVE	(1<<7)
 
 #define Buffer	GPIOR1
 #define DELAY_A		(1<<0)
@@ -59,7 +59,14 @@ register uint8_t time_ms asm("r4");
 register uint8_t counter_read asm("r5"), counter_ms asm("r6");
 static uint8_t timers[2][8];
 
-void do_shifting();
+void do_shifting() 
+{
+	shifter.shift16 = shifter.shift16 >> 1;
+
+	if (BUFF_IN & Buffer)
+		shifter.shift8[BLOCK_B] |= 0x80;
+}
+
 ISR(INT0_vect)
 {
 	if (CLOCK & PIND) // low-›high: latch input
@@ -143,14 +150,6 @@ void init (void)
 	GIMSK	= 0b11000000;	/* enable INT0 and INT1 */
 
 	sei();
-}
-
-void do_shifting() 
-{
-	shifter.shift16 = shifter.shift16 >> 1;
-
-	if (BUFF_IN & Buffer)
-		shifter.shift8[BLOCK_B] |= 0x80;
 }
 
 #define MS_CYCLES	(1024/CYCLETIME)	 /* 1024us ~ 1ms */
