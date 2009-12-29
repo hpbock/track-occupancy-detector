@@ -15,7 +15,7 @@ Data_OUT o---|D1  AT  B6|---o Block 6
          o---|A1 tiny B5|---o Block 5
          o---|A0 2313 B4|---o Block 4
    Clock o-D2|Int0    B3|---o Block 3
-      PS o-D3|Int1    B2|---o Block 2
+ LOAD/PS o-D3|Int1    B2|---o Block 2
    Check o---|D4      B1|---o Block 1
 Enable-B o---|D5      B0|---o Block 0
      GND o---|GND_____D6|---o Enable-A
@@ -30,8 +30,8 @@ char string_1[] PROGMEM = "(c) 2009 Hans-Peter Bock <hpbock@avaapgh.de>";
 
 #define Data_IN		(_BV(PD0))
 #define Data_OUT	(_BV(PD1))
-#define EINT0		(_BV(PD2))
-#define EINT1		(_BV(PD3))
+#define CLOCK		(_BV(PD2))
+#define LOAD		(_BV(PD3))
 #define Check		(_BV(PD4))
 #define Enable_A	(_BV(PD6))
 #define Enable_B	(_BV(PD5))
@@ -45,7 +45,6 @@ char string_1[] PROGMEM = "(c) 2009 Hans-Peter Bock <hpbock@avaapgh.de>";
 #define Buffer	GPIOR1
 #define DELAY_A		(1<<0)
 #define DELAY_B		(1<<1)
-#define BUFF_OUT	(1<<6)
 #define BUFF_IN		(1<<7)
 
 typedef union
@@ -61,16 +60,23 @@ register uint8_t time_ms asm("r4");
 register uint8_t counter_read asm("r5"), counter_ms asm("r6");
 static uint8_t timers[2][8];
 
-ISR(INT0_vect, ISR_NAKED)
+ISR(INT0_vect)
 {
-	Signals |= SIG_CLOCK;
-	if (BUFF_OUT & Buffer)
+	if (CLOCK & PIND) // low-›high: latch input
 	{
-		PORTD |= Data_OUT;
-		reti();
-	} else {
-		PORTD &= ~Data_OUT;
-		reti();
+		if (PIND & Data_IN)
+			Buffer |= BUFF_IN;
+		else
+			Buffer &= ~BUFF_IN;
+
+		if (0 == (LOAD & PIND)) // only shift if LOAD is low
+			Signals |= SIG_CLOCK;
+		
+	} else { // high-›low: latch output
+		if (1 & shifter.shift8[0])
+			PORTD |= Data_OUT;
+		else
+			PORTD &= ~Data_OUT;
 	}
 }
 
@@ -86,9 +92,6 @@ ISR(TIMER0_COMPA_vect)
 	sei();
 	
 	Signals |= SIG_TIMER;
-
-	if (0 == (PIND & Data_IN)) Buffer &= ~BUFF_IN;
-	else Buffer |= BUFF_IN;
 
 	counter_read++;
 	counter_ms++;
@@ -135,7 +138,7 @@ void init (void)
 	OCR0A	= CYCLETIME;
 	TIMSK	= 0b00000001;	/* enable OCF0A interrupt */
 
-	MCUCR	= 0b00001111;	/* configure raising edge interrupt on INT0 and INT1 */
+	MCUCR	= 0b00001101;	/* configure interrupts INT0 and INT1 */
 
 	GIMSK	= 0b11000000;	/* enable INT0 and INT1 */
 
@@ -219,7 +222,7 @@ int main(void)
 {
     init ();
 
-    while (1) /* loop forever, the interrupts are doing the rest */
+    while (1) /* loop forever */
     {
 	if (0 == Signals)
         	sleep_mode();
@@ -229,9 +232,6 @@ int main(void)
 		Signals &= ~SIG_CLOCK;
 		do_shifting();
 	}
-
-	if (1 & shifter.shift8[0]) Buffer |= BUFF_OUT;
-	else Buffer &= ~BUFF_OUT;
 
 	if (SIG_TIMER & Signals)
 	{
