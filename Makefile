@@ -7,7 +7,7 @@ AVRDUDE=/usr/bin/avrdude
 TARGET=gbm16
 
 program : $(TARGET).bin $(TARGET).hex
-	$(AVRDUDE) -p $(AVRDUDEMCU) -P /dev/parport0 -c sp12 -U flash:w:$(TARGET).bin -U eeprom:w:$(TARGET).hex -U lfuse:w:0xe4:m
+	$(AVRDUDE) -p $(AVRDUDEMCU) -E noreset -P /dev/parport0 -c sp12 -U flash:w:$(TARGET).bin -U eeprom:w:$(TARGET).hex -U lfuse:w:0xe4:m
 
 %.obj : %.o
 	$(CC) $(CFLAGS) $< -o $@
