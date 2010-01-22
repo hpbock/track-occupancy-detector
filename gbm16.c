@@ -21,7 +21,7 @@ Enable-B o---|D5      B0|---o Block 0
      GND o---|GND_____D6|---o Enable-A
 */
 
-char string_1[] PROGMEM = "(c) 2009 Hans-Peter Bock <hpbock@avaapgh.de>";
+char string_1[] PROGMEM = "(c) 2009-2010 Hans-Peter Bock <hpbock@avaapgh.de>";
 
 #define CYCLETIME	(64)	/* cycletime in us */
 
@@ -69,7 +69,7 @@ void do_shifting()
 
 ISR(INT0_vect)
 {
-	if (CLOCK & PIND) // low-›high: latch input
+	if (CLOCK & PIND) // low->high: latch input
 	{
 		if (PIND & Data_IN)
 			Buffer |= BUFF_IN;
@@ -79,7 +79,7 @@ ISR(INT0_vect)
 		if (0 == (LOAD & PIND)) // only shift if LOAD is low
 			do_shifting();
 		
-	} else { // high-›low: latch output
+	} else { // high->low: latch output
 		if (1 & shifter.shift8[0])
 			PORTD |= Data_OUT;
 		else
@@ -87,11 +87,10 @@ ISR(INT0_vect)
 	}
 }
 
-ISR(INT1_vect, ISR_NAKED)
+ISR(INT1_vect)
 {
 	shifter.shift8[BLOCK_A] = status.shift8[BLOCK_A];
 	shifter.shift8[BLOCK_B] = status.shift8[BLOCK_B];
-	reti();
 }
 
 ISR(TIMER0_COMPA_vect)
