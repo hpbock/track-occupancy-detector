@@ -25,6 +25,9 @@ char string_1[] PROGMEM = "(c) 2009-2010 Hans-Peter Bock <hpbock@avaapgh.de>";
 
 #define CYCLETIME	(64)	/* cycletime in us */
 
+#define MS_CYCLES	(1024/CYCLETIME) /* 1024us ~ 1ms */
+#define WAIT_CYCLES	(256/CYCLETIME) /* Wait between block switch and read. */
+
 #define BLOCK_A		(0)
 #define BLOCK_B		(1)
 
@@ -36,12 +39,13 @@ char string_1[] PROGMEM = "(c) 2009-2010 Hans-Peter Bock <hpbock@avaapgh.de>";
 #define Enable_A	(_BV(PD6))
 #define Enable_B	(_BV(PD5))
 
-#define Signals	GPIOR0
+#define Signals		GPIOR0
 #define SIG_TIMER	(1<<0)
 #define SIG_CHECK	(1<<1)
-// #define SIG_SAVE	(1<<7)
+// #define SIG_SAVE_A	(1<<6)
+// #define SIG_SAVE_B	(1<<7)
 
-#define Buffer	GPIOR1
+#define Buffer		GPIOR1
 #define DELAY_A		(1<<0)
 #define DELAY_B		(1<<1)
 #define BUFF_IN		(1<<7)
@@ -151,12 +155,11 @@ void init (void)
 	sei();
 }
 
-#define MS_CYCLES	(1024/CYCLETIME)	 /* 1024us ~ 1ms */
 
 void do_timer()
 {
 	uint8_t i;
-	if ((128/CYCLETIME) <= counter_read) /* 128us */
+	if ((WAIT_CYCLES) <= counter_read)
 	{
 		counter_read = 0;
 		Signals |= SIG_CHECK;
