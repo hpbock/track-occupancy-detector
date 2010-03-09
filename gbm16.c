@@ -1,3 +1,10 @@
+/* GBM16smd (c) 2009-2010 by Hans-Peter Bock <hpbock@avaapgh.de>
+ *
+ * This source file is subject of the GNU general public license 2,
+ * that is available at the world-wide-web at
+ * http://www.gnu.org/licenses/gpl.txt
+ */
+
 #include <inttypes.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
