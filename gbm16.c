@@ -175,7 +175,8 @@ void do_timer()
 	if (MS_CYCLES <= counter_ms)
 	{
 		PORTA &= ~_BV(0);
-		counter_ms -= MS_CYCLES;
+//		cli(); counter_ms -= MS_CYCLES; sei();
+		counter_ms -= MS_CYCLES; // with volatile definition, this is atomic
 		time_ms++;
 		for (i=0; i<8; i++)
 		{
