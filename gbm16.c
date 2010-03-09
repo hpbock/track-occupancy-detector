@@ -5,11 +5,11 @@
  * http://www.gnu.org/licenses/gpl.txt
  */
 
-#include <inttypes.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 #include <avr/pgmspace.h>
+#include <stdint.h>
 
 /**********************************************
               H a r d w a r e
@@ -63,11 +63,11 @@ typedef union
         uint16_t shift16;
 } shift_t;
 
-register shift_t shifter asm("r2");
+register volatile shift_t shifter asm("r2");
 static shift_t status;
 
-register uint8_t time_ms asm("r4");
-register uint8_t counter_read asm("r5"), counter_ms asm("r6");
+register volatile uint8_t time_ms asm("r4");
+register volatile uint8_t counter_read asm("r5"), counter_ms asm("r6");
 static uint8_t timers[2][8];
 
 void do_shifting() 
