@@ -145,7 +145,7 @@ void init (void)
 
 	/* configure port D */
 	DDRD	= Data_OUT | Enable_A | Enable_B;
-	PORTD	= Check;
+	PORTD	= Check | Data_IN;
 
 	ACSR	|= ACD;		/* disable analog comparator */
 
