@@ -4,7 +4,7 @@ CC=/usr/bin/avr-gcc
 CFLAGS=-g -Os -Wall -mcall-prologues -mmcu=$(MCU)
 OBJ2HEX=/usr/bin/avr-objcopy
 AVRDUDE=/usr/bin/avrdude
-TARGET=gbm16
+TARGET=gbmx4-cpu
 
 program : $(TARGET).bin $(TARGET).hex
 	$(AVRDUDE) -p $(AVRDUDEMCU) -E noreset -P /dev/parport0 -c sp12 -U flash:w:$(TARGET).bin -U eeprom:w:$(TARGET).hex -U lfuse:w:0xe4:m -U hfuse:w:0xdb:m
