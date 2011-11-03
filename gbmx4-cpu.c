@@ -238,10 +238,10 @@ void do_check_blocks()
 	}
 
 	ABCorD = (ABCorD + 1) % 4; /* switch blocks */
-	PORTD |= Enable_A;	/* Disable_B */
+	PORTD |= Enable_A;	/* Disable_A */
 	PORTA |= Enable_B;	/* Disable_B */
-	PORTD |= Enable_C;	/* Disable_B */
-	PORTD |= Enable_D;	/* Disable_B */
+	PORTD |= Enable_C;	/* Disable_C */
+	PORTD |= Enable_D;	/* Disable_D */
 	if (BLOCK_A == ABCorD) PORTD &= ~Enable_A;	/* Enable_A */
 	else if (BLOCK_B == ABCorD) PORTA &= ~Enable_B;	/* Enable_B */
 	else if (BLOCK_C == ABCorD) PORTD &= ~Enable_C;	/* Enable_C */
