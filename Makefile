@@ -7,7 +7,7 @@ AVRDUDE=/usr/bin/avrdude
 TARGET=gbmx4-cpu
 
 program : $(TARGET).bin $(TARGET).hex
-	$(AVRDUDE) -p $(AVRDUDEMCU) -E noreset -P /dev/parport0 -c sp12 -U flash:w:$(TARGET).bin -U eeprom:w:$(TARGET).hex -U lfuse:w:0xe4:m -U hfuse:w:0xdb:m
+	$(AVRDUDE) -p $(AVRDUDEMCU) -c usbtiny -U flash:w:$(TARGET).bin -U eeprom:w:$(TARGET).hex -U lfuse:w:0xe4:m -U hfuse:w:0xdb:m
 
 %.obj : %.o
 	$(CC) $(CFLAGS) $< -o $@
