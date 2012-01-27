@@ -1,4 +1,4 @@
-/* GBM16smd (c) 2009-2010 by Hans-Peter Bock <hpbock@avaapgh.de>
+/* GBM16smd (c) 2009-2012 by Hans-Peter Bock <hpbock@avaapgh.de>
  *
  * This source file is subject of the GNU general public license 2,
  * that is available at the world-wide-web at
@@ -28,7 +28,7 @@ Enable-D o---|D5      B0|---o Block 0
      GND o---|GND_____D6|---o Enable-A
 */
 
-char string_1[] PROGMEM = "(c) 2009-2011 Hans-Peter Bock <hpbock@avaapgh.de>";
+char string_1[] PROGMEM = "(c) 2009-2012 Hans-Peter Bock <hpbock@avaapgh.de>";
 
 #define CYCLETIME	(64)	/* cycletime in us */
 
@@ -188,7 +188,6 @@ void do_timer()
 
 	if (MS_CYCLES <= counter_ms)
 	{
-		PORTA &= ~_BV(0);
 //		cli(); counter_ms -= MS_CYCLES; sei();
 		counter_ms -= MS_CYCLES; // with volatile definition, this is atomic
 		time_ms++;
