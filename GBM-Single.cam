@@ -4,13 +4,15 @@ Section=Sec_1
 
 [Sec_1]
 Name[de]="*"
+Name[en]="*"
 Prompt[de]=""
+Prompt[en]=""
 Device="EPS"
 Wheel=""
 Rack=""
 Scale=1
 Output="./GBM-Single.eps"
-Flags="0 0 0 1 0 1 0"
+Flags="1 0 0 1 0 1 0"
 Emulate="0 0 0"
 Offset="0.0mil 0.0mil"
 Sheet=1
