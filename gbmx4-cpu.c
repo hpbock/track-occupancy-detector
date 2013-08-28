@@ -28,7 +28,7 @@ Enable-D o---|D5      B0|---o Block 0
      GND o---|GND_____D6|---o Enable-A
 */
 
-char string_1[] PROGMEM = "(c) 2009-2012 Hans-Peter Bock <hpbock@avaapgh.de>";
+const char string_1[] PROGMEM = "(c) 2009-2012 Hans-Peter Bock <hpbock@avaapgh.de>";
 
 #define CYCLETIME	(64)	/* cycletime in us */
 
