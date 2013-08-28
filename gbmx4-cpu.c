@@ -45,10 +45,10 @@ char string_1[] PROGMEM = "(c) 2009-2012 Hans-Peter Bock <hpbock@avaapgh.de>";
 #define CLOCK		(_BV(PD2))
 #define LOAD		(_BV(PD3))
 #define Enable_C	(_BV(PD4))
-#define Enable_D	(_BV(PD5))
-#define Enable_A	(_BV(PD6))
+#define Enable_A	(_BV(PD5))
+#define Enable_B	(_BV(PD6))
 
-#define Enable_B	(_BV(PA0))
+#define Enable_D	(_BV(PA0))
 #define Check		(_BV(PA1))
 
 
@@ -150,7 +150,7 @@ void init (void)
 	CLKPR	= 0x00;
 
 	/* configure port A */
- 	DDRA	= Enable_B;
+ 	DDRA	= Enable_D;
  	PORTA	= Check;
 
 	/* configure port B */
@@ -158,7 +158,7 @@ void init (void)
 	PORTB	= 0b11111111;	/* activate pull up resistors */
 
 	/* configure port D */
-	DDRD	= Data_OUT | Enable_A | Enable_C | Enable_D;
+	DDRD	= Data_OUT | Enable_A | Enable_B | Enable_C;
 	PORTD	= Data_IN;
 
 	ACSR	|= ACD;		/* disable analog comparator */
@@ -238,13 +238,13 @@ void do_check_blocks()
 
 	ABCorD = (ABCorD + 1) % 4; /* switch blocks */
 	PORTD |= Enable_A;	/* Disable_A */
-	PORTA |= Enable_B;	/* Disable_B */
+	PORTD |= Enable_B;	/* Disable_B */
 	PORTD |= Enable_C;	/* Disable_C */
-	PORTD |= Enable_D;	/* Disable_D */
+	PORTA |= Enable_D;	/* Disable_D */
 	if (BLOCK_A == ABCorD) PORTD &= ~Enable_A;	/* Enable_A */
-	else if (BLOCK_B == ABCorD) PORTA &= ~Enable_B;	/* Enable_B */
+	else if (BLOCK_B == ABCorD) PORTD &= ~Enable_B;	/* Enable_B */
 	else if (BLOCK_C == ABCorD) PORTD &= ~Enable_C;	/* Enable_C */
-	else PORTD &= ~Enable_D;			/* Enable_D */
+	else PORTA &= ~Enable_D;			/* Enable_D */
 }
 
 int main(void)
